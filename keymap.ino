@@ -74,7 +74,13 @@
   */
 
 enum { MACRO_VERSION_INFO,
-       MACRO_ANY
+       MACRO_ANY,
+       PIPELINE,
+       GITSTATUS,
+       GITADD,
+       GITCOMMIT,
+       GITAMEND,
+       VISAVE
      };
 
 
@@ -163,16 +169,16 @@ KEYMAPS(
 
   [FUNCTION] =  KEYMAP_STACKED
   (Key_Power,      Key_F1,           Key_F2,      Key_F3,     Key_F4,        Key_F5,           XXX,
-   Key_Tab,  ___,              Key_UpArrow,       ___,           LSHIFT(LALT(Key_UpArrow)), LALT(Key_UpArrow), ___,
+   Key_Tab,  ___,              Key_UpArrow,       ___,           LSHIFT(LALT(Key_UpArrow)), LALT(Key_UpArrow),   M(VISAVE),
    Key_Home, Key_LeftArrow,       Key_DownArrow, Key_RightArrow, LSHIFT(LALT(Key_DownArrow)), LALT(Key_DownArrow),
-   Key_End,  Key_PrintScreen,  Key_Insert,        ___,           ___, ___,  ___,
+   Key_End,  Key_PrintScreen,  Key_Insert,        M(GITSTATUS),  M(GITADD), M(GITCOMMIT),    M(GITAMEND),
    ___, Key_Delete, ___, ___,
    ___,
 
    Consumer_ScanPreviousTrack, Key_F6,                 Key_F7,                   Key_F8,                   Key_F9,          Key_F10,          Key_F11,
    Consumer_PlaySlashPause,    Consumer_ScanNextTrack, Key_LeftCurlyBracket,     Key_RightCurlyBracket,    Key_LeftBracket, Key_RightBracket, Key_F12,
                                Key_mouseL,             Key_mouseDn,               Key_mouseUp,              Key_mouseR,      Key_mouseBtnL,    Key_mouseBtnR,
-   Key_PcApplication,          Consumer_Mute,          Consumer_VolumeDecrement, Consumer_VolumeIncrement, ___,             Key_Backslash,    Key_Pipe,
+   Key_PcApplication,          Consumer_Mute,          Consumer_VolumeDecrement, Consumer_VolumeIncrement, M(PIPELINE),             Key_Backslash,    Key_Pipe,
    ___, ___, Key_Enter, ___,
    ___)
 
@@ -223,6 +229,45 @@ static void anyKeyMacro(uint8_t keyState) {
 
  */
 
+static void pipelineMacro(uint8_t keyState) {
+    if (keyToggledOn(keyState)) {
+    Macros.type(PSTR("|>"));
+  }
+}
+
+static void gitStatusMacro(uint8_t keyState) {
+    if (keyToggledOn(keyState)) {
+    Macros.type(PSTR("git status\n"));
+  }
+}
+
+static void gitAddMacro(uint8_t keyState) {
+    if (keyToggledOn(keyState)) {
+    Macros.type(PSTR("git add .\n"));
+  }
+}
+
+static void gitCommitMacro(uint8_t keyState) {
+    if (keyToggledOn(keyState)) {
+    Macros.type(PSTR("git commit -m ''"));
+    kaleidoscope::hid::pressKey(Key_LeftArrow);
+  }
+}
+
+static void gitAmendMacro(uint8_t keyState) {
+    if (keyToggledOn(keyState)) {
+    Macros.type(PSTR("git commit --amend\n"));
+  }
+}
+
+
+static void viSaveMacro(uint8_t keyState) {
+    if (keyToggledOn(keyState)) {
+    Macros.type(PSTR(":wq\n"));
+  }
+}
+
+
 const macro_t *macroAction(uint8_t macroIndex, uint8_t keyState) {
   switch (macroIndex) {
 
@@ -232,6 +277,30 @@ const macro_t *macroAction(uint8_t macroIndex, uint8_t keyState) {
 
   case MACRO_ANY:
     anyKeyMacro(keyState);
+    break;
+    
+  case PIPELINE:
+    pipelineMacro(keyState);
+    break;
+
+  case GITSTATUS:
+    gitStatusMacro(keyState);
+    break;
+    
+  case GITADD:
+    gitAddMacro(keyState);
+    break;
+
+  case GITCOMMIT:
+    gitCommitMacro(keyState);
+    break;
+  
+  case GITAMEND:
+    gitAmendMacro(keyState);
+    break;    
+  
+  case VISAVE:
+    viSaveMacro(keyState);
     break;
   }
   return MACRO_NONE;
