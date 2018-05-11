@@ -18,6 +18,7 @@
 
 // Support for keys that move the mouse
 #include "Kaleidoscope-MouseKeys.h"
+#include "Kaleidoscope-NumPad.h"
 
 // Support for macros
 #include "Kaleidoscope-Macros.h"
@@ -26,9 +27,6 @@
 #include "Kaleidoscope-LEDControl.h"
 #include <Kaleidoscope-LEDEffects.h>
 #include <Kaleidoscope/TriColor.h>
-
-// Support for "Numpad" mode, which is mostly just the Numpad specific LED mode
-#include "Kaleidoscope-NumPad.h"
 
 // Support for an "LED off mode"
 #include "LED-Off.h"
@@ -154,6 +152,7 @@ void NumPad_::loopHook(bool postClear) {
     return;
 
   if (!Layer.isOn(numPadLayer)) {
+   
     bool numState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
     if (!cleanupDone) {
       LEDControl.set_mode(LEDControl.get_mode_index());
@@ -171,9 +170,9 @@ void NumPad_::loopHook(bool postClear) {
 
   cleanupDone = false;
   syncNumlock(true);
-
+  
   LEDControl.set_mode(LEDControl.get_mode_index());
-
+  
   for (uint8_t r = 0; r < ROWS; r++) {
     for (uint8_t c = 0; c < COLS; c++) {
       Key k = Layer.lookupOnActiveLayer(r, c);
@@ -183,9 +182,10 @@ void NumPad_::loopHook(bool postClear) {
         row  = r;
         col = c;
       }
-
+    
       if ((k != layer_key) || (k == Key_NoKey) || (k.flags != KEY_FLAGS)) {
         LEDControl.refreshAt(r, c);
+        LEDControl.setCrgbAt(r, c, CRGB(0, 51, 204));
       } else {
         LEDControl.setCrgbAt(r, c, numpad_color);
       }
@@ -213,7 +213,7 @@ KEYMAPS(
    Key_Backtick, Key_Q, Key_W, Key_E, Key_R, Key_T, Key_Tab,
    Key_LeftShift,   Key_A, Key_S, Key_D, Key_F, Key_G,
    Key_LeftShift, Key_Z, Key_X, Key_C, Key_V, Key_B, Key_Escape,
-   Key_LeftControl, Key_Backspace, Key_LeftGui, Key_PageDown,
+   Key_LeftGui, Key_Backspace, Key_LeftControl, Key_PageDown,
    ShiftToLayer(FUNCTION),
 
    LGUI(Key_Z),  Key_6, Key_7, Key_8,     Key_9,         Key_0,         LockLayer(NUMPAD),
@@ -229,7 +229,7 @@ KEYMAPS(
    ___, ___, Key_W, ___, ___, ___, ___,
    ___, Key_A, Key_S, Key_D, ___, ___,
    ___, ___, ___, ___, ___, ___, ___,
-   ___, Key_Spacebar, ___, ___,
+   Key_LeftControl, Key_Spacebar, Key_LeftGui, ___,
    ___,
 
    ___,  ___,                   Key_Keypad7, Key_Keypad8,   Key_Keypad9,        Key_KeypadSubtract, ___,
@@ -447,7 +447,7 @@ void setup() {
 
     // We start with the LED effect that turns off all the LEDs.
     &LEDOff,
-
+    &RealMiami,
     // The rainbow wave effect lights up your keyboard with all the colors of a rainbow
     // and slowly moves the rainbow across your keyboard
     &LEDRainbowWaveEffect,
@@ -460,7 +460,6 @@ void setup() {
     // The breathe effect slowly pulses all of the LEDs on your keyboard
     &LEDBreatheEffect,
     
-    &RealMiami,
     &JukeboxEffect,  
 
 
