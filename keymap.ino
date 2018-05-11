@@ -4,6 +4,7 @@
 
 #ifndef BUILD_INFORMATION
 #define BUILD_INFORMATION "locally built"
+
 #endif
 
 
@@ -11,7 +12,6 @@
  * These #include directives pull in the Kaleidoscope firmware core,
  * as well as the Kaleidoscope plugins we use in the Model 01's firmware
  */
-
 
 // The Kaleidoscope core
 #include "Kaleidoscope.h"
@@ -60,7 +60,6 @@
 
 // Support for host power management (suspend & wakeup)
 #include "Kaleidoscope-HostPowerManagement.h"
-
 
 /** This 'enum' is a list of all the macros used by the Model 01's firmware
   * The names aren't particularly important. What is important is that each
@@ -131,6 +130,77 @@ enum { MACRO_VERSION_INFO,
 
 enum { QWERTY, NUMPAD, FUNCTION }; // layers
 
+
+byte NumPad_::row = 255, NumPad_::col = 255;
+uint8_t NumPad_::numPadLayer;
+bool NumPad_::cleanupDone = true;
+bool NumPad_::originalNumLockState = false;
+cRGB numpad_color = CRGB(102, 255, 102);
+
+void NumPad_::begin(void) {
+  Kaleidoscope.useLoopHook(loopHook);
+  originalNumLockState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
+}
+
+static void syncNumlock(bool state) {
+  bool numState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
+  if (numState != state) {
+    kaleidoscope::hid::pressKey(Key_KeypadNumLock);
+  }
+}
+
+void NumPad_::loopHook(bool postClear) {
+  if (!postClear)
+    return;
+
+  if (!Layer.isOn(numPadLayer)) {
+    bool numState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
+    if (!cleanupDone) {
+      LEDControl.set_mode(LEDControl.get_mode_index());
+      syncNumlock(false);
+      cleanupDone = true;
+
+      if (numState && !originalNumLockState) {
+        kaleidoscope::hid::pressKey(Key_KeypadNumLock);
+        numState = false;
+      }
+    }
+    originalNumLockState = numState;
+    return;
+  }
+
+  cleanupDone = false;
+  syncNumlock(true);
+
+  LEDControl.set_mode(LEDControl.get_mode_index());
+
+  for (uint8_t r = 0; r < ROWS; r++) {
+    for (uint8_t c = 0; c < COLS; c++) {
+      Key k = Layer.lookupOnActiveLayer(r, c);
+      Key layer_key = Layer.getKey(numPadLayer, r, c);
+
+      if (k == LockLayer(numPadLayer)) {
+        row  = r;
+        col = c;
+      }
+
+      if ((k != layer_key) || (k == Key_NoKey) || (k.flags != KEY_FLAGS)) {
+        LEDControl.refreshAt(r, c);
+      } else {
+        LEDControl.setCrgbAt(r, c, numpad_color);
+      }
+    }
+  }
+
+  if (row > ROWS || col > COLS)
+    return;
+
+  cRGB color = breath_compute();
+  LEDControl.setCrgbAt(row, col, color);
+}
+
+NumPad_ NumPad;
+
 /* This comment temporarily turns off astyle's indent enforcement
  *   so we can make the keymaps actually resemble the physical key layout better
  */
@@ -156,17 +226,17 @@ KEYMAPS(
 
   [NUMPAD] =  KEYMAP_STACKED
   (___, ___, ___, ___, ___, ___, ___,
+   ___, ___, Key_W, ___, ___, ___, ___,
+   ___, Key_A, Key_S, Key_D, ___, ___,
    ___, ___, ___, ___, ___, ___, ___,
-   ___, ___, ___, ___, ___, ___,
-   ___, ___, ___, ___, ___, ___, ___,
-   ___, ___, ___, ___,
+   ___, Key_Spacebar, ___, ___,
    ___,
 
    ___,  ___,                   Key_Keypad7, Key_Keypad8,   Key_Keypad9,        Key_KeypadSubtract, ___,
    ___,                    ___, Key_Keypad4, Key_Keypad5,   Key_Keypad6,        Key_KeypadAdd,      ___,
                            ___, Key_Keypad1, Key_Keypad2,   Key_Keypad3,        Key_Equals,         ___,
    ___,                    ___, Key_Keypad0, Key_KeypadDot, Key_KeypadMultiply, Key_KeypadDivide,   Key_Enter,
-   ___, ___, ___, ___,
+   ___, ___, Key_Backspace, ___,
    ___),
 
   [FUNCTION] =  KEYMAP_STACKED
@@ -230,7 +300,7 @@ static void anyKeyMacro(uint8_t keyState) {
     Each 'case' statement should call out to a function to handle the macro in question.
 
  */
-
+ 
 static void pipelineMacro(uint8_t keyState) {
     if (keyToggledOn(keyState)) {
     Macros.type(PSTR("|>"));
@@ -277,7 +347,7 @@ const macro_t *macroAction(uint8_t macroIndex, uint8_t keyState) {
     versionInfoMacro(keyState);
     break;
 
-  case MACRO_ANY:
+  case MACRO_ANY:    
     anyKeyMacro(keyState);
     break;
     
