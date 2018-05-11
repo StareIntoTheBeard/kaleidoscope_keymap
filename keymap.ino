@@ -229,7 +229,7 @@ KEYMAPS(
    ___, ___, Key_W, ___, ___, ___, ___,
    ___, Key_A, Key_S, Key_D, ___, ___,
    ___, ___, ___, ___, ___, ___, ___,
-   Key_Spacebarf, Key_LeftControl, Key_LeftGui, ___,
+   Key_Spacebar, Key_LeftControl, Key_LeftGui, ___,
    ___,
 
    ___,  ___,                   Key_Keypad7, Key_Keypad8,   Key_Keypad9,        Key_KeypadSubtract, ___,
