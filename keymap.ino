@@ -426,6 +426,10 @@ kaleidoscope::TriColor RealMiami   (CRGB(0x3c, 0xfc, 0xef),   /* Cyan */
 kaleidoscope::TriColor Skeletor   (CRGB(83, 176, 190),   /* Cyan */
                                    CRGB(110, 87, 150),
                                    CRGB(133, 184, 103));  /* Magenta */
+                                   
+kaleidoscope::TriColor Atreus62   (CRGB(243, 161, 101),   /* Cyan */
+                                   CRGB(202, 62,  57));  /* Magenta */
+
 /** The 'setup' function is one of the two standard Arduino sketch functions.
   * It's called when your keyboard first powers up. This is where you set up
   * Kaleidoscope and any plugins.
@@ -452,6 +456,7 @@ void setup() {
     &LEDOff,
     &RealMiami,
     &Skeletor,
+    &Atreus62,
     // The rainbow wave effect lights up your keyboard with all the colors of a rainbow
     // and slowly moves the rainbow across your keyboard
     &LEDRainbowWaveEffect,
