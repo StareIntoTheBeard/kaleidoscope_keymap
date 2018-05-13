@@ -423,6 +423,9 @@ void hostPowerManagementEventHandler(kaleidoscope::HostPowerManagement::Event ev
 kaleidoscope::TriColor RealMiami   (CRGB(0x3c, 0xfc, 0xef),   /* Cyan */
                                    CRGB(0xd9, 0x3c, 0xfc));  /* Magenta */
 
+kaleidoscope::TriColor Skeletor   (CRGB(83, 176, 190),   /* Cyan */
+                                   CRGB(110, 87, 150),
+                                   CRGB(133, 184, 103));  /* Magenta */
 /** The 'setup' function is one of the two standard Arduino sketch functions.
   * It's called when your keyboard first powers up. This is where you set up
   * Kaleidoscope and any plugins.
@@ -448,6 +451,7 @@ void setup() {
     // We start with the LED effect that turns off all the LEDs.
     &LEDOff,
     &RealMiami,
+    &Skeletor,
     // The rainbow wave effect lights up your keyboard with all the colors of a rainbow
     // and slowly moves the rainbow across your keyboard
     &LEDRainbowWaveEffect,
@@ -459,9 +463,6 @@ void setup() {
 
     // The breathe effect slowly pulses all of the LEDs on your keyboard
     &LEDBreatheEffect,
-    
-    &JukeboxEffect,  
-
 
     // The stalker effect lights up the keys you've pressed recently
     &StalkerEffect,
