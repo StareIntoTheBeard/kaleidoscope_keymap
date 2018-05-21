@@ -27,6 +27,7 @@
 #include "Kaleidoscope-LEDControl.h"
 #include <Kaleidoscope-LEDEffects.h>
 #include <Kaleidoscope/TriColor.h>
+#include "tricolor-themes.h"
 
 // Support for an "LED off mode"
 #include "LED-Off.h"
@@ -45,8 +46,15 @@
 #include "Kaleidoscope-LEDEffect-Chase.h"
 
 // Support for LED modes that pulse the keyboard's LED in a rainbow pattern
-#include "Kaleidoscope-LEDEffect-Rainbow.h"
+//#include "Kaleidoscope-LEDEffect-Rainbow.h"
+#pragma once
 
+#include "Kaleidoscope-LEDControl.h"
+#include "LEDUtils.h"
+
+#include "jbean-Led-Rainbow.h"
+#include "macros.h"
+#include "numpad.h"
 // Support for an LED mode that lights up the keys as you press them
 #include "Kaleidoscope-LED-Stalker.h"
 
@@ -71,17 +79,6 @@
   * That switch statement actually runs the code associated with a macro when
   * a macro key is pressed.
   */
-
-enum { MACRO_VERSION_INFO,
-       MACRO_ANY,
-       PIPELINE,
-       GITSTATUS,
-       GITADD,
-       GITCOMMIT,
-       GITAMEND,
-       VISAVE
-     };
-
 
 
 /** The Model 01's key layouts are defined as 'keymaps'. By default, there are three
@@ -129,77 +126,6 @@ enum { MACRO_VERSION_INFO,
 enum { QWERTY, NUMPAD, FUNCTION }; // layers
 
 
-byte NumPad_::row = 255, NumPad_::col = 255;
-uint8_t NumPad_::numPadLayer;
-bool NumPad_::cleanupDone = true;
-bool NumPad_::originalNumLockState = false;
-cRGB numpad_color = CRGB(102, 255, 102);
-
-void NumPad_::begin(void) {
-  Kaleidoscope.useLoopHook(loopHook);
-  originalNumLockState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
-}
-
-static void syncNumlock(bool state) {
-  bool numState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
-  if (numState != state) {
-    kaleidoscope::hid::pressKey(Key_KeypadNumLock);
-  }
-}
-
-void NumPad_::loopHook(bool postClear) {
-  if (!postClear)
-    return;
-
-  if (!Layer.isOn(numPadLayer)) {
-   
-    bool numState = !!(kaleidoscope::hid::getKeyboardLEDs() & LED_NUM_LOCK);
-    if (!cleanupDone) {
-      LEDControl.set_mode(LEDControl.get_mode_index());
-      syncNumlock(false);
-      cleanupDone = true;
-
-      if (numState && !originalNumLockState) {
-        kaleidoscope::hid::pressKey(Key_KeypadNumLock);
-        numState = false;
-      }
-    }
-    originalNumLockState = numState;
-    return;
-  }
-
-  cleanupDone = false;
-  syncNumlock(true);
-  
-  LEDControl.set_mode(LEDControl.get_mode_index());
-  
-  for (uint8_t r = 0; r < ROWS; r++) {
-    for (uint8_t c = 0; c < COLS; c++) {
-      Key k = Layer.lookupOnActiveLayer(r, c);
-      Key layer_key = Layer.getKey(numPadLayer, r, c);
-
-      if (k == LockLayer(numPadLayer)) {
-        row  = r;
-        col = c;
-      }
-    
-      if ((k != layer_key) || (k == Key_NoKey) || (k.flags != KEY_FLAGS)) {
-        LEDControl.refreshAt(r, c);
-        LEDControl.setCrgbAt(r, c, CRGB(0, 51, 204));
-      } else {
-        LEDControl.setCrgbAt(r, c, numpad_color);
-      }
-    }
-  }
-
-  if (row > ROWS || col > COLS)
-    return;
-
-  cRGB color = breath_compute();
-  LEDControl.setCrgbAt(row, col, color);
-}
-
-NumPad_ NumPad;
 
 /* This comment temporarily turns off astyle's indent enforcement
  *   so we can make the keymaps actually resemble the physical key layout better
@@ -300,83 +226,6 @@ static void anyKeyMacro(uint8_t keyState) {
     Each 'case' statement should call out to a function to handle the macro in question.
 
  */
- 
-static void pipelineMacro(uint8_t keyState) {
-    if (keyToggledOn(keyState)) {
-    Macros.type(PSTR("|>"));
-  }
-}
-
-static void gitStatusMacro(uint8_t keyState) {
-    if (keyToggledOn(keyState)) {
-    Macros.type(PSTR("git status\n"));
-  }
-}
-
-static void gitAddMacro(uint8_t keyState) {
-    if (keyToggledOn(keyState)) {
-    Macros.type(PSTR("git add .\n"));
-  }
-}
-
-static void gitCommitMacro(uint8_t keyState) {
-    if (keyToggledOn(keyState)) {
-    Macros.type(PSTR("git commit -m ''"));
-    kaleidoscope::hid::pressKey(Key_LeftArrow);
-  }
-}
-
-static void gitAmendMacro(uint8_t keyState) {
-    if (keyToggledOn(keyState)) {
-    Macros.type(PSTR("git commit --amend\n"));
-  }
-}
-
-
-static void viSaveMacro(uint8_t keyState) {
-    if (keyToggledOn(keyState)) {
-    Macros.type(PSTR(":wq\n"));
-  }
-}
-
-
-const macro_t *macroAction(uint8_t macroIndex, uint8_t keyState) {
-  switch (macroIndex) {
-
-  case MACRO_VERSION_INFO:
-    versionInfoMacro(keyState);
-    break;
-
-  case MACRO_ANY:    
-    anyKeyMacro(keyState);
-    break;
-    
-  case PIPELINE:
-    pipelineMacro(keyState);
-    break;
-
-  case GITSTATUS:
-    gitStatusMacro(keyState);
-    break;
-    
-  case GITADD:
-    gitAddMacro(keyState);
-    break;
-
-  case GITCOMMIT:
-    gitCommitMacro(keyState);
-    break;
-  
-  case GITAMEND:
-    gitAmendMacro(keyState);
-    break;    
-  
-  case VISAVE:
-    viSaveMacro(keyState);
-    break;
-  }
-  return MACRO_NONE;
-}
 
 
 
@@ -419,16 +268,6 @@ void toggleLedsOnSuspendResume(kaleidoscope::HostPowerManagement::Event event) {
 void hostPowerManagementEventHandler(kaleidoscope::HostPowerManagement::Event event) {
   toggleLedsOnSuspendResume(event);
 }
-
-kaleidoscope::TriColor RealMiami   (CRGB(0x3c, 0xfc, 0xef),   /* Cyan */
-                                   CRGB(0xd9, 0x3c, 0xfc));  /* Magenta */
-
-kaleidoscope::TriColor Skeletor   (CRGB(83, 176, 190),   /* Cyan */
-                                   CRGB(110, 87, 150),
-                                   CRGB(133, 184, 103));  /* Magenta */
-                                   
-kaleidoscope::TriColor Atreus62   (CRGB(243, 161, 101),   /* Cyan */
-                                   CRGB(202, 62,  57));  /* Magenta */
 
 /** The 'setup' function is one of the two standard Arduino sketch functions.
   * It's called when your keyboard first powers up. This is where you set up
